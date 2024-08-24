@@ -20,7 +20,7 @@ export class NoteKnexRepository implements NoteRepository {
 
   find(id: string): TaskEither<RepositoryError, Note> {
     return TE.tryCatch(
-      () => this.client.select(this.fields),
+      () => this.client.where({ id }).select(this.fields),
       (reason) => new NotFound(reason as string)
     );
   }
