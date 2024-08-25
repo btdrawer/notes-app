@@ -4,7 +4,7 @@ class NotFoundRepositoryError implements RepositoryError {
   name = "not_found_repository";
   message: string;
 
-  constructor(message: string) {
+  constructor(message: string = "The entity could not be found.") {
     this.message = message;
   }
 }
