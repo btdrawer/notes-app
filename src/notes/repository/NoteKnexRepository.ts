@@ -1,7 +1,7 @@
 import { Knex } from "knex";
 import TE, { TaskEither } from "fp-ts/lib/TaskEither";
 import { Note } from "../contract/types";
-import { NoteRepository } from "./types";
+import { NoteRepository } from "./NoteRepository";
 
 export class NoteKnexRepository implements NoteRepository {
   private client: Knex<Note, unknown[]>;

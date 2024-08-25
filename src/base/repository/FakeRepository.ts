@@ -47,7 +47,10 @@ export class FakeRepository<ID, T> implements Repository<ID, T> {
     return pipe(
       TE.fromIO(maybeEntityIO),
       TE.flatMap(
-        O.match(() => TE.left<RepositoryError, T>(new NotFound("")), TE.right)
+        O.match(
+          () => TE.left<RepositoryError, T>(new NotFoundRepositoryError("")),
+          TE.right
+        )
       )
     );
   }
