@@ -11,3 +11,5 @@ export interface NoteFacade {
 
   delete(context: UserContext, id: string): TaskEither<NoteError, void>;
 }
+
+export const getNoteId = (note: Note) => note.id;
