@@ -1,6 +1,6 @@
-interface NoteError extends Error {}
+export interface NoteError extends Error {}
 
-class NotFoundNoteError implements NoteError {
+export class NotFoundNoteError implements NoteError {
   name = "not_found_note";
   message: string;
 
@@ -9,7 +9,7 @@ class NotFoundNoteError implements NoteError {
   }
 }
 
-class InternalNoteError implements NoteError {
+export class InternalNoteError implements NoteError {
   name = "internal_error_note";
   message: string;
 

@@ -1,6 +1,6 @@
-interface RepositoryError extends Error {}
+export interface RepositoryError extends Error {}
 
-class NotFoundRepositoryError implements RepositoryError {
+export class NotFoundRepositoryError implements RepositoryError {
   name = "not_found_repository";
   message: string;
 
@@ -9,7 +9,7 @@ class NotFoundRepositoryError implements RepositoryError {
   }
 }
 
-class InternalRepositoryError implements RepositoryError {
+export class InternalRepositoryError implements RepositoryError {
   name = "internal_error_repository";
   message: string;
 

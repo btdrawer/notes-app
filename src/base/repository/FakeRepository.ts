@@ -3,6 +3,10 @@ import { Repository } from "./Repository";
 import * as TE from "fp-ts/TaskEither";
 import * as IO from "fp-ts/lib/IO";
 import * as O from "fp-ts/lib/Option";
+import {
+  RepositoryError,
+  NotFoundRepositoryError,
+} from "./error/RepositoryError";
 
 export class FakeRepository<ID, T> implements Repository<ID, T> {
   protected state: Map<ID, T> = new Map<ID, T>();
@@ -48,7 +52,7 @@ export class FakeRepository<ID, T> implements Repository<ID, T> {
       TE.fromIO(maybeEntityIO),
       TE.flatMap(
         O.match(
-          () => TE.left<RepositoryError, T>(new NotFoundRepositoryError("")),
+          () => TE.left<RepositoryError, T>(new NotFoundRepositoryError()),
           TE.right
         )
       )
