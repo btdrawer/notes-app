@@ -17,7 +17,7 @@ export class NoteKnexRepository implements NoteRepository {
 
   save(entity: Note): TaskEither<RepositoryError, Note> {
     return TE.tryCatch(
-      () => this.client.insert(entity, this.fields),
+      () => this.client<Note>(this.tableName).insert(entity, this.fields),
       (reason) => new InternalRepositoryError(reason as string)
     );
   }

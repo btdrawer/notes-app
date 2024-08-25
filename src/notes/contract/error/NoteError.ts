@@ -4,7 +4,7 @@ class NotFoundNoteError implements NoteError {
   name = "not_found_note";
   message: string;
 
-  constructor(message: string) {
+  constructor(message: string = "The note was not found.") {
     this.message = message;
   }
 }
