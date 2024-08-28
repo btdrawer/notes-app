@@ -1,7 +1,6 @@
 import { pipe } from "fp-ts/function";
 import * as TE from "fp-ts/TaskEither";
 import * as T from "fp-ts/Task";
-import { isRight } from "fp-ts/Either";
 import { toBeLeft, toBeRight } from "@relmify/jest-fp-ts";
 import { NoteFacade } from "./NoteFacade";
 
@@ -37,10 +36,7 @@ export const noteFacadeTests = (facade: NoteFacade) =>
 
     describe("create", () => {
       it("should create a new note", async () => {
-        const either = await facade.create(firstContext, {
-          title: "New note",
-          text: "Hello world",
-        })();
+        const either = await facade.create(firstContext, basicCreateNote)();
 
         expect(either).toEqualRight({
           id: expect.any(String),
@@ -117,10 +113,8 @@ export const noteFacadeTests = (facade: NoteFacade) =>
       it(
         "should not delete a note if different user",
         pipe(
-          facade.create(firstContext, {
-            title: "New note",
-            text: "Hello world",
-          }),
+          TE.Do,
+          TE.flatMap(() => facade.create(firstContext, basicCreateNote)),
           TE.flatMap((entity) => facade.delete(secondContext, entity.id)),
           T.map((deleteEither) => expect(deleteEither).toBeLeft())
         )
