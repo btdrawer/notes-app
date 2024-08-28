@@ -7,4 +7,5 @@ module.exports = {
   globals: {
     __DEV__: true,
   },
+  setupFilesAfterEnv: ["@relmify/jest-fp-ts"],
 };

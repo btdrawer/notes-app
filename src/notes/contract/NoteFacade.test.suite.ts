@@ -1,128 +1,129 @@
 import { pipe } from "fp-ts/function";
 import * as TE from "fp-ts/TaskEither";
+import * as T from "fp-ts/Task";
 import { isRight } from "fp-ts/Either";
+import { toBeLeft, toBeRight } from "@relmify/jest-fp-ts";
 import { NoteFacade } from "./NoteFacade";
-import { NotFoundNoteError } from "./error/NoteError";
+
+expect.extend({ toBeLeft, toBeRight });
 
 export const noteFacadeTests = (facade: NoteFacade) =>
   describe("NoteFacade", () => {
     const firstContext = { userId: "user-id" };
     const secondContext = { userId: "another-user-id" };
 
+    const basicCreateNote = {
+      title: "New note",
+      text: "Hello world",
+    };
+
+    const cleanup = pipe(
+      TE.Do,
+      TE.flatMap(() => facade.list(firstContext)),
+      TE.flatMap((notes) =>
+        TE.sequenceArray(
+          notes.map((note) => facade.delete(firstContext, note.id))
+        )
+      ),
+      TE.flatMap(() => facade.list(secondContext)),
+      TE.flatMap((notes) =>
+        TE.sequenceArray(
+          notes.map((note) => facade.delete(secondContext, note.id))
+        )
+      )
+    );
+
+    afterEach(cleanup);
+
     describe("create", () => {
       it("should create a new note", async () => {
-        /** given */
-
-        /** when */
-        const result = await facade.create(firstContext, {
+        const either = await facade.create(firstContext, {
           title: "New note",
           text: "Hello world",
         })();
 
-        /** then */
-        if (isRight(result)) {
-          expect(result.right.title).toEqual("New note");
-          expect(result.right.text).toEqual("Hello world");
-          expect(result.right.userId).toEqual("user-id");
-        } else {
-          expect(isRight(result)).toBe(true);
-        }
+        expect(either).toEqualRight({
+          id: expect.any(String),
+          title: "New note",
+          text: "Hello world",
+          userId: "user-id",
+        });
       });
     });
 
     describe("list", () => {
       it("should list a user's notes", async () => {
-        /** given */
-        const notes = await pipe(
-          facade.create(firstContext, {
-            title: "New note",
-            text: "Hello world",
-          }),
-          TE.bindTo("firstNote"),
+        const either = await pipe(
+          TE.Do,
+          TE.bind("firstNote", () =>
+            facade.create(firstContext, basicCreateNote)
+          ),
           TE.bind("secondNote", () =>
-            facade.create(firstContext, {
-              title: "New note",
-              text: "Hello world",
-            })
+            facade.create(firstContext, basicCreateNote)
           ),
           TE.bind("thirdNote", () =>
-            facade.create(secondContext, {
-              title: "New note",
-              text: "Hello world",
-            })
-          )
+            facade.create(secondContext, basicCreateNote)
+          ),
+          TE.bind("result", () => facade.list(firstContext)),
+          TE.bind("anotherContextResult", () => facade.list(secondContext)),
+          TE.map(({ result, anotherContextResult }) => ({
+            result,
+            anotherContextResult,
+          }))
         )();
 
-        /** when */
-        const result = await facade.list(firstContext)();
-        const anotherContextResult = await facade.list(secondContext)();
-
-        /** then */
-        if (
-          isRight(notes) &&
-          isRight(result) &&
-          isRight(anotherContextResult)
-        ) {
-          expect(result.right.sort).toEqual(
-            [notes.right.firstNote, notes.right.secondNote].sort
-          );
-          expect(anotherContextResult.right.sort).toEqual(
-            [notes.right.thirdNote].sort
-          );
-        } else {
-          expect(isRight(notes)).toBe(true);
-          expect(isRight(result)).toBe(true);
-          expect(isRight(anotherContextResult)).toBe(true);
-        }
+        expect(either).toSubsetEqualRight({
+          result: [
+            {
+              id: expect.any(String),
+              ...basicCreateNote,
+              ...firstContext,
+            },
+            {
+              id: expect.any(String),
+              ...basicCreateNote,
+              ...firstContext,
+            },
+          ],
+          anotherContextResult: [
+            {
+              id: expect.any(String),
+              ...basicCreateNote,
+              ...secondContext,
+            },
+          ],
+        });
       });
     });
 
     describe("delete", () => {
-      it("should delete a note", () => {
-        return pipe(
-          facade.create(firstContext, {
-            title: "New note",
-            text: "Hello world",
-          }),
-          TE.bindTo("entity"),
-          TE.flatMap(({ entity }) =>
-            pipe(
-              facade.delete(firstContext, entity.id),
-              TE.flatMap(() => facade.get(firstContext, entity.id)),
-              TE.mapLeft((error) =>
-                expect(error instanceof NotFoundNoteError).toBe(true)
-              ),
-              TE.map(() => {
-                throw new Error(
-                  "Expected function result to be left but was right"
-                );
-              })
-            )
-          )
+      it("should delete a note", async () => {
+        const either = await pipe(
+          TE.Do,
+          TE.bind("entity", () => facade.create(firstContext, basicCreateNote)),
+          TE.bind("deleteResult", ({ entity }) =>
+            facade.delete(firstContext, entity.id)
+          ),
+          TE.map(({ entity }) => entity)
         )();
+
+        expect(either).toEqualRight({
+          id: expect.any(String),
+          ...basicCreateNote,
+          ...firstContext,
+        });
       });
 
-      it("should not delete a note if different user", () => {
-        return pipe(
+      it(
+        "should not delete a note if different user",
+        pipe(
           facade.create(firstContext, {
             title: "New note",
             text: "Hello world",
           }),
-          TE.bindTo("entity"),
-          TE.flatMap(({ entity }) =>
-            pipe(
-              facade.delete(secondContext, entity.id),
-              TE.mapLeft((error) =>
-                expect(error instanceof NotFoundNoteError).toBe(true)
-              ),
-              TE.map(() => {
-                throw new Error(
-                  "Expected function result to be left but was right"
-                );
-              })
-            )
-          )
-        )();
-      });
+          TE.flatMap((entity) => facade.delete(secondContext, entity.id)),
+          T.map((deleteEither) => expect(deleteEither).toBeLeft())
+        )
+      );
     });
   });
