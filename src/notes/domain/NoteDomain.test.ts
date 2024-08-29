@@ -1,9 +1,20 @@
+import { PostgreSqlContainer } from "@testcontainers/postgresql";
 import { getNoteId } from "../contract/NoteFacade";
 import { noteFacadeTests } from "../contract/NoteFacade.test.suite";
-import { NoteFakeRepository } from "../repository/NoteFakeRepository";
+import { NoteFakeRepository } from "../repository/fake/NoteFakeRepository";
 import { NoteDomain } from "./NoteDomain";
 
-const fakeRepository = new NoteFakeRepository(getNoteId);
-const domainWithFakeRepository = new NoteDomain(fakeRepository);
+const unitTests = async () => {
+  const repository = new NoteFakeRepository(getNoteId);
+  const domain = new NoteDomain(repository);
 
-noteFacadeTests(domainWithFakeRepository);
+  return noteFacadeTests(domain);
+};
+
+const integrationTests = async () => {
+  const postgresqlContainer = await new PostgreSqlContainer().start();
+
+  await postgresqlContainer.stop();
+};
+
+unitTests().then(integrationTests);
