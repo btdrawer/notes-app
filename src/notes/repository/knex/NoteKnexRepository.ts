@@ -2,13 +2,13 @@ import { Knex } from "knex";
 import { pipe } from "fp-ts/function";
 import TE, { TaskEither } from "fp-ts/lib/TaskEither";
 import O from "fp-ts/Option";
-import { Note } from "../contract/types";
-import { NoteRepository } from "./NoteRepository";
+import { Note } from "../../contract/types";
+import { NoteRepository } from "../NoteRepository";
 import {
   RepositoryError,
   NotFoundRepositoryError,
   InternalRepositoryError,
-} from "../../base/repository/error/RepositoryError";
+} from "../../../base/repository/error/RepositoryError";
 
 export class NoteKnexRepository implements NoteRepository {
   private client: Knex<Note, unknown[]>;
