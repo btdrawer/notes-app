@@ -11,7 +11,7 @@ import {
 } from "../../../base/repository/error/RepositoryError";
 
 export class NoteKnexRepository implements NoteRepository {
-  private client: Knex<Note, unknown[]>;
+  private client: Knex<any, unknown[]>;
   private tableName: string;
   private fields: string[] = ["id", "title", "text", "userId"];
 

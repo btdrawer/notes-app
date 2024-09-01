@@ -1,12 +1,12 @@
 import { pipe } from "fp-ts/function";
-import { Repository } from "./Repository";
 import * as TE from "fp-ts/TaskEither";
 import * as IO from "fp-ts/lib/IO";
 import * as O from "fp-ts/lib/Option";
+import { Repository } from "../Repository";
 import {
   RepositoryError,
   NotFoundRepositoryError,
-} from "./error/RepositoryError";
+} from "../error/RepositoryError";
 
 export class FakeRepository<ID, T> implements Repository<ID, T> {
   protected state: Map<ID, T> = new Map<ID, T>();
