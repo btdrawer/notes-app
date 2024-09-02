@@ -7,8 +7,8 @@ import { NoteRepository } from "../NoteRepository";
 import {
   RepositoryError,
   NotFoundRepositoryError,
-  InternalRepositoryError,
 } from "../../../base/repository/error/RepositoryError";
+import { handleKnexErrors } from "../../../base/repository/knex/handleKnexErrors";
 
 export class NoteKnexRepository implements NoteRepository {
   private client: Knex<any, unknown[]>;
@@ -23,7 +23,7 @@ export class NoteKnexRepository implements NoteRepository {
   save(entity: Note): TaskEither<RepositoryError, Note> {
     return TE.tryCatch(
       () => this.client<Note>(this.tableName).insert(entity, this.fields),
-      (reason) => new InternalRepositoryError(reason as string)
+      handleKnexErrors
     );
   }
 
@@ -31,7 +31,7 @@ export class NoteKnexRepository implements NoteRepository {
     return pipe(
       TE.tryCatch(
         () => this.client<Note>(this.tableName).where({ id }).select().first(),
-        (reason) => new InternalRepositoryError(reason as string)
+        handleKnexErrors
       ),
       TE.map(O.fromNullable),
       TE.flatMap(
@@ -46,14 +46,11 @@ export class NoteKnexRepository implements NoteRepository {
   findByUserId(userId: string): TaskEither<RepositoryError, Note[]> {
     return TE.tryCatch(
       () => this.client<Note>(this.tableName).where({ userId }).select(),
-      (reason) => new InternalRepositoryError(reason as string)
+      handleKnexErrors
     );
   }
 
   delete(id: string): TaskEither<RepositoryError, void> {
-    return TE.tryCatch(
-      () => this.client.delete(id),
-      (reason) => new InternalRepositoryError(reason as string)
-    );
+    return TE.tryCatch(() => this.client.delete(id), handleKnexErrors);
   }
 }

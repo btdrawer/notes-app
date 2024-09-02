@@ -6,9 +6,9 @@ import { User } from "../../contract/types";
 import { UserRepository } from "../UserRepository";
 import {
   RepositoryError,
-  InternalRepositoryError,
   NotFoundRepositoryError,
 } from "../../../base/repository/error/RepositoryError";
+import { handleKnexErrors } from "../../../base/repository/knex/handleKnexErrors";
 
 export class UserKnexRepository implements UserRepository {
   private client: Knex<any, unknown[]>;
@@ -23,7 +23,7 @@ export class UserKnexRepository implements UserRepository {
   save(entity: User): TE.TaskEither<RepositoryError, User> {
     return TE.tryCatch(
       () => this.client<User>(this.tableName).insert(entity, this.fields),
-      (reason) => new InternalRepositoryError(reason as string)
+      handleKnexErrors
     );
   }
 
@@ -31,7 +31,7 @@ export class UserKnexRepository implements UserRepository {
     return pipe(
       TE.tryCatch(
         () => this.client<User>(this.tableName).where({ id }).select().first(),
-        (reason) => new InternalRepositoryError(reason as string)
+        handleKnexErrors
       ),
       TE.map(O.fromNullable),
       TE.flatMap(
@@ -44,9 +44,6 @@ export class UserKnexRepository implements UserRepository {
   }
 
   delete(id: string): TE.TaskEither<RepositoryError, void> {
-    return TE.tryCatch(
-      () => this.client.delete(id),
-      (reason) => new InternalRepositoryError(reason as string)
-    );
+    return TE.tryCatch(() => this.client.delete(id), handleKnexErrors);
   }
 }
