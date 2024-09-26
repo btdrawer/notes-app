@@ -1,8 +1,9 @@
 import { pipe } from "fp-ts/function";
 import * as TE from "fp-ts/TaskEither";
-import * as T from "fp-ts/Task";
+import { v4 as uuidv4 } from "uuid";
 import { toBeLeft, toBeRight } from "@relmify/jest-fp-ts";
 import { NoteFacade } from "./NoteFacade";
+import { NotFoundNoteError } from "./error/NoteError";
 
 expect.extend({ toBeLeft, toBeRight });
 
@@ -110,14 +111,20 @@ export const noteFacadeTests = (facade: NoteFacade) =>
         });
       });
 
-      it(
-        "should not delete a note if different user",
-        pipe(
+      it("should not delete a note if different user", async () => {
+        const either = await pipe(
           TE.Do,
           TE.flatMap(() => facade.create(firstContext, basicCreateNote)),
-          TE.flatMap((entity) => facade.delete(secondContext, entity.id)),
-          T.map((deleteEither) => expect(deleteEither).toBeLeft())
-        )
-      );
+          TE.flatMap((entity) => facade.delete(secondContext, entity.id))
+        )();
+
+        expect(either).toEqualLeft(expect.any(NotFoundNoteError));
+      });
+
+      it("return not found if a note does not exist", async () => {
+        const either = await facade.delete(secondContext, uuidv4())();
+
+        expect(either).toEqualLeft(expect.any(NotFoundNoteError));
+      });
     });
   });
